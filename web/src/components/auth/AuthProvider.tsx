@@ -78,7 +78,10 @@ async function ensureAmplifyConfigured() {
 }
 
 export function AuthProvider(props: { children: React.ReactNode }) {
-  const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "1";
+  // The public portfolio deployment has no Cognito backend.  Keep it usable by
+  // default; set this explicitly to "0" only when a real Cognito deployment is
+  // configured.
+  const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE !== "0";
   const [ready, setReady] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [error, setError] = useState("");
