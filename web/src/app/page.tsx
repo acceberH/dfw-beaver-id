@@ -1135,6 +1135,15 @@ export default function Home() {
 
   const loadHistoryJobs = async () => {
     setHistoryError("");
+    const uiOnlyDemo =
+      typeof window !== "undefined" &&
+      window.location.hostname.endsWith(".vercel.app") &&
+      process.env.NEXT_PUBLIC_ENABLE_LIVE_INFERENCE !== "1";
+    if (uiOnlyDemo) {
+      setHistoryJobs([]);
+      setHistoryLoading(false);
+      return;
+    }
     setHistoryLoading(true);
     try {
       const query = new URLSearchParams();
