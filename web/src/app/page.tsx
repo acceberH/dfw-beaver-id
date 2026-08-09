@@ -787,6 +787,24 @@ export default function Home() {
     });
   };
 
+  const buildUiDemoResults = (files: File[]) =>
+    mapClassifyResults(
+      files.map((file, index) => {
+        const variants = [
+          { is_beaver: true, has_animal: true, common_name: "Beaver", group: "mammal" },
+          { is_beaver: false, has_animal: true, common_name: "River otter", group: "mammal" },
+          { is_beaver: false, has_animal: false, common_name: "No animal", group: "none" },
+        ];
+        const result = variants[index % variants.length];
+        return {
+          filename: file.name,
+          ...result,
+          confidence: result.is_beaver ? 0.92 : result.has_animal ? 0.81 : 0.96,
+          notes: "UI demo preview — live inference is not connected in this public portfolio build.",
+        };
+      }),
+    );
+
   const handleRunDetection = async () => {
     setRunError("");
     setIsRunning(true);
@@ -794,6 +812,29 @@ export default function Home() {
       const formData = new FormData();
       const s3 = s3Path.trim();
       const allFiles = [...selectedFiles];
+      const uiOnlyDemo =
+        typeof window !== "undefined" &&
+        window.location.hostname.endsWith(".vercel.app") &&
+        process.env.NEXT_PUBLIC_ENABLE_LIVE_INFERENCE !== "1";
+
+      if (uiOnlyDemo) {
+        if (s3) {
+          throw new Error("S3 path input is retained as an AWS legacy feature and is unavailable in this public UI demo.");
+        }
+        if (!allFiles.length) {
+          throw new Error("Select one or more images to preview the workflow.");
+        }
+        setResults(buildUiDemoResults(allFiles));
+        setJobId(null);
+        setJobStatus("demo");
+        setJobCsvKey("");
+        setJobProgress({ completed: allFiles.length, total: allFiles.length });
+        setCsvText("");
+        setCsvPath("");
+        setCsvName("");
+        return;
+      }
+
       const isSingleS3File = Boolean(s3) && /\.(jpe?g|png|tiff?|webp)$/i.test(s3);
       const useClassifyApi =
         isSingleS3File || (!s3 && allFiles.length > 0 && allFiles.length <= 5);
