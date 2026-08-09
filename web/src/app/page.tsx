@@ -1088,6 +1088,24 @@ export default function Home() {
     setInput("");
     setChatStatus("loading");
     try {
+      const uiOnlyDemo =
+        typeof window !== "undefined" &&
+        window.location.hostname.endsWith(".vercel.app") &&
+        process.env.NEXT_PUBLIC_ENABLE_LIVE_INFERENCE !== "1";
+      if (uiOnlyDemo) {
+        const summary = results.length
+          ? `The current UI preview contains ${results.length} uploaded image${results.length === 1 ? "" : "s"}. You can inspect labels, edit a review decision, and export the reviewed CSV from the workflow.`
+          : "Upload images in the Workflow tab to preview the review table, editing controls, and CSV export.";
+        setChatMessages([
+          ...nextMessages,
+          {
+            id: `assistant_${Date.now()}`,
+            role: "assistant" as const,
+            text: `Portfolio demo assistant: ${summary} Live dataset chat is not connected in this public preview.`,
+          },
+        ]);
+        return;
+      }
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
