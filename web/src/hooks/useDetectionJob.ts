@@ -4,6 +4,56 @@ import { Job, DetectionResult, DetectionLabel } from "@/types/detection";
 const generateJobId = () =>
   `job_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
 
+type ClassifyApiResult = {
+  filename: string;
+  has_beaver?: boolean;
+  has_animal?: boolean;
+  confidence?: number;
+  reason?: string;
+  common_name?: string;
+  animal_type?: string;
+  animal_group?: string;
+  animal_confidence?: number | string;
+  animal_reason?: string;
+  bbox?: unknown;
+  model_id?: string;
+  exif_timestamp?: string;
+};
+
+function toDetectionResult(
+  result: ClassifyApiResult,
+  index: number,
+  previewUrls: Record<string, string>,
+): DetectionResult {
+  const predictedLabel: DetectionLabel = result.has_beaver
+    ? "beaver"
+    : result.has_animal
+      ? "other_animal"
+      : "no_animal";
+
+  return {
+    id: `${result.filename}-${index}`,
+    filename: result.filename,
+    image_path: previewUrls[result.filename] || result.filename,
+    predicted_label: predictedLabel,
+    confidence: result.confidence ?? 0,
+    reason: result.reason || "",
+    review_label: predictedLabel,
+    was_corrected: false,
+    notes: result.animal_reason || result.reason || "",
+    model_id: result.model_id || "",
+    has_beaver: Boolean(result.has_beaver),
+    has_animal: Boolean(result.has_animal),
+    Common_Name: result.common_name || result.animal_type || "No animal",
+    animal_type: result.animal_type,
+    animal_group: result.animal_group,
+    animal_confidence: result.animal_confidence,
+    animal_reason: result.animal_reason,
+    bbox: result.bbox ? JSON.stringify(result.bbox) : "",
+    exif_timestamp: result.exif_timestamp,
+  };
+}
+
 export const useDetectionJob = () => {
   const [currentJob, setCurrentJob] = useState<Job | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -71,17 +121,23 @@ export const useDetectionJob = () => {
     try {
       setCurrentJob((prev) => (prev ? { ...prev, status: "running" } : null));
 
-      const formData = new FormData();
-      formData.append("jobName", currentJob.name);
+      // Keep the AWS-sponsored controls visible for the project story, but do
+      // not send a portable demo request to S3/SQS/Postgres paths that no
+      // longer exist after the AWS account is retired.
       if (s3Path.trim()) {
-        formData.append("s3Path", s3Path.trim());
-      } else {
-        uploadedFiles.forEach((file) => {
-          formData.append("files", file, file.name);
-        });
+        throw new Error("S3 path input is retained as an AWS legacy feature and is unavailable in the portable demo.");
+      }
+      if (uploadedFiles.length > 5) {
+        throw new Error("Batch upload is retained as an AWS legacy feature. The portable demo supports up to 5 local images at once.");
       }
 
-      const response = await fetch("/api/beaver/run", {
+      const formData = new FormData();
+      formData.append("jobName", currentJob.name);
+      uploadedFiles.forEach((file) => {
+        formData.append("files", file, file.name);
+      });
+
+      const response = await fetch("/api/classify", {
         method: "POST",
         body: formData,
       });
@@ -92,10 +148,9 @@ export const useDetectionJob = () => {
       }
 
       const payload = await response.json();
-      const results: DetectionResult[] = (payload.results || []).map((result: DetectionResult) => {
-        const preview = previewUrls[result.filename];
-        return preview ? { ...result, image_path: preview } : result;
-      });
+      const results: DetectionResult[] = (payload.results || []).map(
+        (result: ClassifyApiResult, index: number) => toDetectionResult(result, index, previewUrls),
+      );
 
       setProgress(100);
       setCurrentJob((prev) =>

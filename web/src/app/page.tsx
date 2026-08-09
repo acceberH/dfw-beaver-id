@@ -1209,7 +1209,7 @@ export default function Home() {
   };
 
   const goToTab = (tab: "home" | "dashboard" | "history" | "chat") => {
-    if (tab !== "home" && auth.ready && !auth.user) {
+    if (tab !== "home" && auth.ready && !auth.user && !auth.demoMode) {
       setShowAuth(true);
       return;
     }
@@ -1219,7 +1219,7 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen text-[hsl(var(--foreground))]">
-      <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
+      {!auth.demoMode && <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />}
       {activeTab === "home" && (
         <div
           aria-hidden="true"
@@ -1283,7 +1283,11 @@ export default function Home() {
               History
             </button>
             <div className="mx-2 h-4 w-px bg-[hsl(var(--border))]" />
-            {auth.user ? (
+            {auth.demoMode ? (
+              <span className="rounded-full border border-[hsl(var(--border))] bg-white/70 px-3 py-1 text-xs font-semibold text-[hsl(var(--muted-foreground))]">
+                Demo mode
+              </span>
+            ) : auth.user ? (
               <button
                 type="button"
                 onClick={() => auth.signOut()}

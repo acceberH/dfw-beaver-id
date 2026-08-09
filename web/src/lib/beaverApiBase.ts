@@ -1,5 +1,6 @@
-const FALLBACK_API_BASE =
-  "https://l8jfz274hk.execute-api.us-east-2.amazonaws.com";
+// Local development only.  Production must set BEAVER_API_BASE_URL to the
+// standalone JS backend; never fall back to the retired AWS API Gateway.
+const LOCAL_API_BASE = "http://127.0.0.1:7860";
 
 export function resolveBeaverApiBase() {
   const fromEnv =
@@ -8,7 +9,7 @@ export function resolveBeaverApiBase() {
     process.env.AMPLIFY_BEAVER_API_BASE_URL;
 
   return {
-    value: fromEnv || FALLBACK_API_BASE,
+    value: fromEnv || LOCAL_API_BASE,
     source: fromEnv ? "env" : "fallback",
   };
 }

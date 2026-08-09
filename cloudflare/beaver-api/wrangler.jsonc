@@ -1,0 +1,10 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "dfw-beaver-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-09",
+  "workers_dev": true,
+  "ai": {
+    "binding": "AI"
+  }
+}
