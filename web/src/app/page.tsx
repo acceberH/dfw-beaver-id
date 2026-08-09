@@ -1094,14 +1094,14 @@ export default function Home() {
         process.env.NEXT_PUBLIC_ENABLE_LIVE_INFERENCE !== "1";
       if (uiOnlyDemo) {
         const summary = results.length
-          ? `The current UI preview contains ${results.length} uploaded image${results.length === 1 ? "" : "s"}. You can inspect labels, edit a review decision, and export the reviewed CSV from the workflow.`
-          : "Upload images in the Workflow tab to preview the review table, editing controls, and CSV export.";
+          ? `I can help you explore the ${results.length} image${results.length === 1 ? "" : "s"} in the current review workspace. You can inspect labels, adjust review decisions, and export the reviewed CSV from the Workflow tab.`
+          : "Start by uploading images in the Workflow tab. Once results are available, I can help you review labels, corrections, and export options.";
         setChatMessages([
           ...nextMessages,
           {
             id: `assistant_${Date.now()}`,
             role: "assistant" as const,
-            text: `Portfolio demo assistant: ${summary} Live dataset chat is not connected in this public preview.`,
+            text: summary,
           },
         ]);
         return;
